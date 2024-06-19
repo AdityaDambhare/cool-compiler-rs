@@ -86,13 +86,22 @@ impl Scanner{
             },
             '*' =>self.add_token(STAR, None),
             '/' =>self.add_token(SLASH, None) ,
-            '=' =>self.add_token(EQUAL, None),
-            '<' =>{
-                if self.peek() == '='{
+            '=' =>{
+                if self.peek() == '>'{
                     self.advance();
-                    self.add_token(DARROW, None)
+                    self.add_token(RARROW, None)
                 }
-                else if self.peek() == '-'{
+                else{
+                    self.add_token(ASSIGN, None)
+                }
+            },
+            '>' =>self.add_token(MORETHAN, None),
+            '<' =>{
+                if self.check('='){
+                    self.advance();
+                    self.add_token(LARROW, None)
+                }
+                else if self.check_next('-'){
                     self.advance();
                     self.add_token(ASSIGN, None)
                 }
@@ -100,9 +109,11 @@ impl Scanner{
                     self.add_token(LESSTHAN, None)
                 }
             },
-            '\"'=>self.string_token(),
+            '\"'=>{self.advance();self.string_token()},
+            ' ' | '\r' | '\t' => None,
             _ =>{
                 if Self::is_alpha(c) {
+                    self.start = self.start - 1;
                     self.identifier()
                 }
                 else if Self::is_digit(c) {
@@ -118,6 +129,12 @@ impl Scanner{
     }
 
     fn peek(&mut self)->char{
+        match self.source.chars().nth(self.current-1){
+            None =>'`',
+            Some(value) => value
+        }
+    }
+    fn peek_next(&mut self)->char{
         match self.source.chars().nth(self.current){
             None =>'`',
             Some(value) => value
@@ -125,7 +142,11 @@ impl Scanner{
     }
 
     fn check(&mut self,c:char)->bool{
-        c == self.peek()
+      !self.eof() && c == self.peek() 
+    }
+
+    fn check_next(&mut self,c:char)->bool{
+       !self.eof()&& c==self.peek_next()
     }
 
     fn advance(&mut self)->char{
@@ -140,6 +161,7 @@ impl Scanner{
         while !self.eof() && Self::is_alphanumeric(self.peek()){
             self.advance();
         }
+        self.current = self.current-1;
         let lexeme :&str = self.source[self.start..self.current].trim();
         let tokentype :TokenType = match Token::keyword(lexeme) {
           Some(value) => value,
@@ -152,6 +174,7 @@ impl Scanner{
         while !self.eof() && Self::is_digit(self.peek()){
             self.advance();
         }
+        self.current = self.current - 1;
         self.add_token(INTEGER, Some(self.source[self.start..self.current].to_string()))
     }
 
@@ -162,12 +185,15 @@ impl Scanner{
         if self.eof() {
             return  self.add_token(ERROR, None);
         }
-        self.advance();
-        self.add_token(STRING, Some(self.source[self.start..self.current].to_string()))
+       self.start = self.start + 1;
+       self.current = self.current - 1;
+       let tok = self.add_token(STRING, Some(self.source[self.start..self.current].to_string()));
+       self.advance();
+       tok
     }
 
     fn is_digit(c : char)->bool{
-        c>='0' && c<='9'
+        c>='0' && c<='9'    
     }
     fn is_alpha(c:char)->bool{
         (c>='a' && c<='z')||(c=='_')
@@ -187,17 +213,16 @@ impl Scanner{
             if self.check('\n'){
                 self.line = self.line + 1;
             }
-            if self.check('*')  {
+            if self.check('*') && self.check_next(')'){
                 self.advance();
-                if self.check( ')' )
-            {
                 self.advance();
                 break;
             }
+            
             self.advance();
         }
     }
-    }
+    
     fn eof(&mut self)->bool{
         self.current >= self.source.len()  
     }
