@@ -57,7 +57,7 @@ impl Scanner{
                 None
             },
             '(' => {
-                if self.peek() == '*'{
+                if self.check_next('*'){
                     self.block_comment();
                     None
                 }
