@@ -89,13 +89,22 @@ impl Scanner{
             '=' =>{
                 if self.check_next('>'){
                     self.advance();
-                    self.add_token(MORETHAN, None)
+                    self.add_token(RARROW, None)
                 }
                 else{
                     self.add_token(EQUALITY, None)
                 }
             },
-            '>' =>self.add_token(MORETHAN, None),
+            '>' =>
+            {
+                if self.check_next('='){
+                    self.advance();
+                    self.add_token(MOREEQUAL, None)
+                }
+                else{
+                    self.add_token(MORETHAN, None)
+                }
+            },
             '<' =>{
                 if self.check_next('='){
                     self.advance();

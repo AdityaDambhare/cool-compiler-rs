@@ -9,9 +9,9 @@ operator precedence from highest to lowest
 isvoid 
 * /
 + -
-<= < = =>  // = is equality operator . => is more than operator.
+<= < = >=   // = is equality operator . => is more than operator.
 not
-<-
+<- =>
 */
 
 /* 
@@ -65,23 +65,24 @@ pub struct Class{
     features : Vec<Feature>
 }
 
-
+type Type = Token;
+type identifier = Token;
 
 pub enum Feature {
     Method{
-        id : Token,
+        id : identifier,
         parameters : Vec<Formal>,
     },
     Attribute{
         id : Token,
-        type_ : Token,
+        type_ : Type,
         expr : Option<Expr>
     }
 } 
 
 pub struct Formal{
-    id : Token,
-    type_ : Token
+    id : identifier,
+    type_ : Type
 }
 
 pub enum Expr{
@@ -107,17 +108,42 @@ pub enum Expr{
         operator : Token,
         right : Box<Expr>
     },
-    New,
-    IsVoid,
-    BitWiseNot,
-    Dispatch,
-    Attribute,
-    Call,
-    StringLiteral,
-    IntgerLiteral,
-    BoolLiteral,
-    ID,
-    Case,
+    New{
+        type_ : Token
+    },
+    IsVoid{
+        expr : Box<Expr>
+    },
+    BitWiseNot{ //~ operator
+        expr : Box<Expr>
+    },
+    DispatchSelection{ //@ operator
+        expr : Box<Expr>,
+        type_ : Type,
+        id : Token,
+        arguments : Vec<Expr>
+    },
+    Call{
+        id : identifier,
+        arguments : Vec<Expr>
+    },
+    StringLiteral{
+        value : Token
+    },
+    IntgerLiteral{
+        value : Token
+    },
+    BoolLiteral{
+        value : Token
+    },
+    ID{
+        id : identifier
+    },
+    Case{
+
+    },
     If,
-    While
+    While,
+    Let,
+    Block
 }

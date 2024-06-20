@@ -10,7 +10,7 @@ pub enum TokenType{
     LEFTPAREN,RIGHTPAREN,LEFTBRACE,RIGHTBRACE,SEMICOLON,COLON,
 
     //operators
-    DOT,AT,TILDA,ISVOID,STAR,SLASH,PLUS,MINUS,NOT,EQUAL,LESSTHAN,MORETHAN,ASSIGN,EQUALITY,LESSEQUAL,MOREEQUAL,
+    DOT,AT,TILDA,ISVOID,STAR,SLASH,PLUS,MINUS,NOT,EQUAL,LESSTHAN,MORETHAN,ASSIGN,EQUALITY,LESSEQUAL,MOREEQUAL,RARROW,
 
     EOF,
     ERROR
@@ -71,7 +71,7 @@ impl TokenType{
             TokenType::  KEYESAC=>"KEYESAC",
             TokenType::  KEYNEW=>"KEYNEW",
             TokenType::  KEYOF=>"KEYOF",
-            
+            TokenType::  RARROW=>"RARROW",
             TokenType::  KEYTRUE=>"KEYTRUE",
             TokenType::  KEYFALSE=>"KEYFALSE",
             TokenType::  INTEGER=>"INTEGER",
