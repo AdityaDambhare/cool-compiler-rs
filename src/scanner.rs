@@ -76,7 +76,7 @@ impl Scanner{
             '~' => self.add_token(TILDA, None),
             '+' =>self.add_token(PLUS, None),
             '-' =>{
-                if self.peek() == '-'{
+                if self.check_next('-'){
                     self.comment();
                     None
                 }
@@ -87,19 +87,19 @@ impl Scanner{
             '*' =>self.add_token(STAR, None),
             '/' =>self.add_token(SLASH, None) ,
             '=' =>{
-                if self.peek() == '>'{
+                if self.check_next('>'){
                     self.advance();
-                    self.add_token(RARROW, None)
+                    self.add_token(MORETHAN, None)
                 }
                 else{
-                    self.add_token(ASSIGN, None)
+                    self.add_token(EQUALITY, None)
                 }
             },
             '>' =>self.add_token(MORETHAN, None),
             '<' =>{
-                if self.check('='){
+                if self.check_next('='){
                     self.advance();
-                    self.add_token(LARROW, None)
+                    self.add_token(LESSEQUAL, None)
                 }
                 else if self.check_next('-'){
                     self.advance();
@@ -201,11 +201,11 @@ impl Scanner{
         Self::is_alpha(c)||Self::is_digit(c)
     }
     fn comment(&mut self){
-        while !self.eof() && self.peek() != '\n' {
+        while !self.eof() && self.check('\n') {
             self.advance();
-        }
-            self.advance();
-            self.line = self.line + 1;
+        }   
+        if self.check('\n'){self.line = self.line + 1;}
+        self.advance();
     }
     fn block_comment(&mut self){
         while !self.eof(){

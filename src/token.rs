@@ -10,7 +10,7 @@ pub enum TokenType{
     LEFTPAREN,RIGHTPAREN,LEFTBRACE,RIGHTBRACE,SEMICOLON,COLON,
 
     //operators
-    DOT,AT,TILDA,ISVOID,STAR,SLASH,PLUS,MINUS,RARROW,LARROW,NOT,EQUAL,LESSTHAN,MORETHAN,ASSIGN,
+    DOT,AT,TILDA,ISVOID,STAR,SLASH,PLUS,MINUS,NOT,EQUAL,LESSTHAN,MORETHAN,ASSIGN,EQUALITY,LESSEQUAL,MOREEQUAL,
 
     EOF,
     ERROR
@@ -76,7 +76,9 @@ impl TokenType{
             TokenType::  KEYFALSE=>"KEYFALSE",
             TokenType::  INTEGER=>"INTEGER",
             TokenType::  IDENTIFIER=>"IDENTIFIER",
-            
+            TokenType:: LESSEQUAL=>"LESSEQUAL",
+            TokenType:: MOREEQUAL=>"MOREEQUAL",
+            TokenType:: EQUALITY=>"EQUALITY",
             TokenType::  LEFTPAREN=>"LEFTPAREN",
             TokenType::  RIGHTPAREN=>"RIGHTPAREN",
             TokenType::  LEFTBRACE=>"LEFTBRACE",
@@ -91,8 +93,6 @@ impl TokenType{
             TokenType::  SLASH=>"SLASH",
             TokenType:: PLUS=>"PLUS",
             TokenType:: MINUS=>"MINUS",
-            TokenType::  LARROW=>"LARROW",
-            TokenType::  RARROW=>"RARROW",
             TokenType::  MORETHAN=>"MORETHAN",
             TokenType::  NOT=>"NOT",
             TokenType::  EQUAL=>"EQUAL",

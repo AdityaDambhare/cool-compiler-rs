@@ -9,7 +9,7 @@ operator precedence from highest to lowest
 isvoid 
 * /
 + -
-<= < = >=  // = is equality operator . 
+<= < = =>  // = is equality operator . => is more than operator.
 not
 <-
 */
@@ -85,10 +85,39 @@ pub struct Formal{
 }
 
 pub enum Expr{
-    Assign,
-    Not,
-    Comparison,
-    Arithmetic,
-    Factor,
-    
+    Assign{
+        left : Box<Expr>,
+        right : Box<Expr>
+    },
+    Not{
+        expr : Box<Expr>
+    },
+    Comparison{
+        left : Box<Expr>,
+        operator : Token,
+        right : Box<Expr>
+    },
+    Arithmetic{
+        left : Box<Expr>,
+        operator : Token,
+        right : Box<Expr>
+    },
+    Factor{
+        left : Box<Expr>,
+        operator : Token,
+        right : Box<Expr>
+    },
+    New,
+    IsVoid,
+    BitWiseNot,
+    Dispatch,
+    Attribute,
+    Call,
+    StringLiteral,
+    IntgerLiteral,
+    BoolLiteral,
+    ID,
+    Case,
+    If,
+    While
 }
