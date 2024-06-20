@@ -113,7 +113,6 @@ impl Scanner{
             ' ' | '\r' | '\t' => None,
             _ =>{
                 if Self::is_alpha(c) {
-                    self.start = self.start - 1;
                     self.identifier()
                 }
                 else if Self::is_digit(c) {
@@ -196,7 +195,7 @@ impl Scanner{
         c>='0' && c<='9'    
     }
     fn is_alpha(c:char)->bool{
-        (c>='a' && c<='z')||(c=='_')
+        (c>='a' && c<='z')||(c=='_')||(c>='A' && c<='Z')
     }
     fn is_alphanumeric(c:char)->bool{
         Self::is_alpha(c)||Self::is_digit(c)
