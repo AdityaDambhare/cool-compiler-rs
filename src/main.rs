@@ -1,4 +1,6 @@
 use scanner::Scanner;
+use parser::Parser;
+use ast::Expr;
 use std::io;
 mod token;
 mod scanner;
@@ -29,7 +31,9 @@ fn runprompt(){
     for tok in tokens.iter(){
         println!("{:?}",tok);
     }
-    
+    let mut  p = Parser::new(tokens);
+    let expr = p.parse();
+    println!("{:?}",expr);
 }
 }
 fn main() {

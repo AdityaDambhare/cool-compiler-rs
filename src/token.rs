@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug,Copy,Clone,PartialEq)]
 pub enum TokenType{
     //keywords
     KEYCLASS,KEYIF,KEYELSE,KEYTHEN,KEYFI,KEYIN,KEYINHERITS,KEYLET,KEYLOOP,KEYPOOL,KEYWHILE,
@@ -15,7 +15,7 @@ pub enum TokenType{
     EOF,
     ERROR
 }
-#[derive(Debug)]
+#[derive(Debug,Clone)]
 pub struct Token{
    pub line : usize,
    pub lexeme : String,

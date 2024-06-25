@@ -13,6 +13,7 @@ isvoid
 <= < = >=   // = is equality operator . => is more than operator.
 not
 <- =>
+
 */
 
 /* 
@@ -87,7 +88,7 @@ pub struct Formal{
     id : identifier,
     type_ : Type
 }
-
+#[derive(Debug)]
 pub enum Expr{
     Assign{
         left : Box<Expr>,
@@ -123,8 +124,11 @@ pub enum Expr{
     DispatchSelection{ //@ operator
         expr : Box<Expr>,
         type_ : Type,
-        id : Token,
-        arguments : Vec<Expr>
+    },
+    
+    Dot{
+        expr : Box<Expr>,
+        id : identifier
     },
     Call{
         id : identifier,
@@ -133,7 +137,7 @@ pub enum Expr{
     StringLiteral{
         value : Token
     },
-    IntgerLiteral{
+    IntegerLiteral{
         value : Token
     },
     BoolLiteral{
@@ -173,6 +177,13 @@ pub enum Expr{
     },
     Block{
         exprs : Vec<Expr>
+    },
+    Grouping{
+        expr : Box<Expr>
+    },
+    Error{
+        message : String
+    
     }
 }
 
@@ -197,3 +208,59 @@ impl Feature{
     }
 }
 
+impl Formal{
+    pub fn new(id:identifier,type_:Type)->Formal{
+        Formal{id,type_}
+    }
+}
+
+impl Expr{
+    pub fn Not(expr:Expr)->Expr{
+        Expr::Not{expr:Box::new(expr)}
+    }
+    pub fn Assign(left:Expr,right:Expr)->Expr{
+        Expr::Assign{left:Box::new(left),right:Box::new(right)}
+    }
+    pub fn Comparison(left:Expr,operator:Token,right:Expr)->Expr{
+        Expr::Comparison{left:Box::new(left),operator,right:Box::new(right)}
+    }
+    pub fn Arithmetic(left:Expr,operator:Token,right:Expr)->Expr{
+        Expr::Arithmetic{left:Box::new(left),operator,right:Box::new(right)}
+    }
+    pub fn Factor(left:Expr,operator:Token,right:Expr)->Expr{
+        Expr::Factor{left:Box::new(left),operator,right:Box::new(right)}
+    }
+    pub fn New(type_:Token)->Expr{
+        Expr::New{type_}
+    }
+    pub fn IsVoid(expr:Expr)->Expr{
+        Expr::IsVoid{expr:Box::new(expr)}
+    }
+    pub fn BitWiseNot(expr:Expr)->Expr{
+        Expr::BitWiseNot{expr:Box::new(expr)}
+    }
+    pub fn Grouping(expr:Expr)->Expr{
+        Expr::Grouping{expr:Box::new(expr)}
+    }
+    pub fn DispatchSelection(expr:Expr,type_:Type)->Expr{
+        Expr::DispatchSelection{expr:Box::new(expr),type_}
+    }
+    pub fn Dot(expr:Expr,id:identifier)->Expr{
+        Expr::Dot{expr:Box::new(expr),id}
+    }
+    pub fn Call(id:identifier,arguments:Vec<Expr>)->Expr{
+        Expr::Call{id,arguments}
+    }
+    pub fn StringLiteral(value:Token)->Expr{
+        Expr::StringLiteral{value}
+    }
+    pub fn IntegerLiteral(value:Token)->Expr{
+        Expr::IntegerLiteral{value}
+    }
+    pub fn BoolLiteral(value:Token)->Expr{
+        Expr::BoolLiteral{value}
+    }
+    pub fn Error(message:String)->Expr{
+        Expr::Error{message}
+    }
+}
