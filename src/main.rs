@@ -1,15 +1,11 @@
 use scanner::Scanner;
-use std::fs;
 use std::io;
 mod token;
 mod scanner;
-mod ast;
 mod parser;
+mod ast;
 
-fn main() {
-    //let file_path = "examples/hairyscary.cl" ;
-    //let source = fs::read_to_string(file_path)
-    //.expect("Should have been able to read the file");
+fn runprompt(){
     loop
     {
     let mut source = String::new();
@@ -22,12 +18,22 @@ fn main() {
         }
     };
     let mut scanner = Scanner::new(source);
-    let tokens = scanner.scan_tokens();
+    let tokens = match scanner.scan_tokens(){
+        Ok(tokens) => tokens,
+        Err(e) => {
+            println!("{}",e);
+            continue;
+        }
+    };
+
     for tok in tokens.iter(){
         println!("{:?}",tok);
     }
-
-    }
+    
+}
+}
+fn main() {
+    runprompt();
 }
 
 

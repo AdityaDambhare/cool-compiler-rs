@@ -2,6 +2,7 @@ use crate::token::*;
 use crate::token::TokenType::*;
 
 pub struct Scanner{
+    had_error: bool,
     line:  usize,
     start: usize,
     current: usize,
@@ -12,6 +13,7 @@ impl Scanner{
 
     pub fn new(source:String)->Scanner{
         Scanner{
+            had_error:false,
             line:1usize,
             source:source.to_string(),
             current:0usize,
@@ -19,7 +21,12 @@ impl Scanner{
         }
     }
 
-    pub fn scan_tokens(&mut self)->Vec<Token>{
+    fn error(&mut self,line:usize,message:&str){
+        eprintln!("[line {}] Error: {}",line,message);
+        self.had_error = true;
+    }
+
+    pub fn scan_tokens(&mut self)->Result<Vec<Token>,&str>{
         self.line  = 1;
         let mut tokens : Vec<Token> = Vec::new();
         
@@ -41,8 +48,12 @@ impl Scanner{
                 None
             )
         );
-
-        tokens
+        if self.had_error{
+            Err("Error in scanning")
+        }
+        else{
+            Ok(tokens)
+        }
     }
 
    fn add_token(&mut self,tokentype:TokenType,literal:Option<String>)->Option<Token>{
@@ -66,6 +77,7 @@ impl Scanner{
                 }
             
             },
+            ',' => self.add_token(COMMA, None),
             ')' => self.add_token(RIGHTPAREN, None),
             '{' => self.add_token(LEFTBRACE, None),
             '}' => self.add_token(RIGHTBRACE, None),
@@ -129,6 +141,7 @@ impl Scanner{
                 }
                
                 else{
+                    self.error(self.line,"Unexpected character ");
                    None
                 }
             }
@@ -188,9 +201,14 @@ impl Scanner{
 
     fn string_token(&mut self)->Option<Token>{
         while !self.eof() && !self.check('\"') {
+            if self.check('\0') {self.error(self.line,"null character in string");}
+            if self.check('\n'){
+                self.line = self.line + 1;
+            }
             self.advance();
         }
         if self.eof() {
+            self.error(self.line,"Unterminated string");
             return  self.add_token(ERROR, None);
         }
        self.start = self.start + 1;
@@ -226,8 +244,8 @@ impl Scanner{
                 self.advance();
                 break;
             }
-            
             self.advance();
+            if self.eof() {self.error(self.line,"Unterminated block comment");}
         }
     }
     

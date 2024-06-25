@@ -1,8 +1,9 @@
 use crate::token::Token;
-use crate::token::TokenType::*;
+
 
 /*
 operator precedence from highest to lowest
+
 .
 @
 ~ bitwie not
@@ -34,7 +35,7 @@ expr ::= ID <- expr
 | while expr loop expr pool
 | { [[expr; ]]+}
 | let ID : TYPE [ <- expr ] [[, ID : TYPE [ <- expr ]]]∗ in expr
-| case expr of [[ID : TYPE => expr; ]]+esac
+| case expr of [ID : TYPE => expr]]+esac
 | new TYPE
 | isvoid expr
 | expr + expr
@@ -71,7 +72,9 @@ type identifier = Token;
 pub enum Feature {
     Method{
         id : identifier,
+        type_ : Type,
         parameters : Vec<Formal>,
+        body : Expr
     },
     Attribute{
         id : Token,
@@ -140,10 +143,57 @@ pub enum Expr{
         id : identifier
     },
     Case{
-
+        expr : Box<Expr>,
+        branches : Vec<Expr>
     },
-    If,
-    While,
-    Let,
-    Block
+    Branch{
+        id : identifier,
+        type_ : Type,
+        expr : Box<Expr>
+    }
+    ,
+    If{
+        Condition : Box<Expr>,
+        Then : Box<Expr>,
+        Else : Box<Expr> 
+    },
+    While{
+        Condition : Box<Expr>,
+        Loop : Box<Expr>
+    },
+    Let{
+
+        declarations : Vec<Expr>,//Declaration
+        body : Box<Expr>
+    },
+    Declaration{
+        id : identifier,
+        type_ : Type,
+        expr : Box<Option<Expr>>
+    },
+    Block{
+        exprs : Vec<Expr>
+    }
 }
+
+impl Program{
+    pub fn new(classes:Vec<Class>)->Program{
+        Program{classes}
+    }
+}
+
+impl Class{
+    pub fn new(type_:Token, inherits:Option<Token>, features:Vec<Feature>)->Class{
+        Class{type_,inherits,features}
+    }
+}
+
+impl Feature{
+    pub fn new_method(id:identifier,type_:Type,parameters:Vec<Formal>,body:Expr)->Feature{
+        Feature::Method{id,type_,parameters,body}
+    }
+    pub fn new_attribute(id:Token,type_:Type,expr:Option<Expr>)->Feature{
+        Feature::Attribute{id,type_,expr}
+    }
+}
+
