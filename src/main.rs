@@ -46,7 +46,7 @@ fn runprompt(){
             continue;
         }
     };
-    println!("{:?}",prog);
+    println!("{}",astprinter::AstPrinter::print_program(&prog));
 }
 }
 

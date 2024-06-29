@@ -56,6 +56,38 @@ expr ::= ID <- expr
 | false
 
 */
+
+pub trait  Visitor<T>{
+    fn visit_program(&mut self,classes:&Vec<Class>)->T;
+    fn visit_class(&mut self,type_:&Token,inherits:&Option<Token>,feature:&Vec<Feature>)->T;
+    fn visit_method(&mut self,id:&Token,type_:&Token,parameters:&Vec<Formal>,body:&Expr)->T;
+    fn visit_attribute(&mut self,id:&Token,type_:&Token,expr:&Option<Expr>)->T;
+    fn visit_formal(&mut self,id:&Token,type_:&Token)->T;
+    fn visit_expr(&mut self,expr:&Expr)->T;
+    fn visit_branch(&mut self,id:&Token,type_:&Token,expr:&Expr)->T;
+    fn visit_declaration(&mut self,id:&Token,type_:&Token,expr:&Option<Expr>)->T;
+    fn visit_block(&mut self,exprs:&Vec<Expr>)->T;
+    fn visit_let(&mut self,declarations:&Vec<Expr>,body:&Expr)->T;
+    fn visit_while(&mut self,condition:&Expr,body:&Expr)->T;
+    fn visit_if(&mut self,condition:&Expr,body:&Expr,else_expr:&Expr)->T;
+    fn visit_case(&mut self,condition:&Expr,branches:&Vec<Expr>)->T;
+    fn visit_arithmetic(&mut self,left:&Expr,operator:&Token,right:&Expr)->T;
+    fn visit_comparison(&mut self,left:&Expr,operator:&Token,right:&Expr)->T;
+    fn visit_factor(&mut self,left:&Expr,operator:&Token,right:&Expr)->T;
+    fn visit_assign(&mut self,left:&Expr,right:&Expr)->T;
+    fn visit_not(&mut self,not_expr:&Expr)->T;
+    fn visit_new(&mut self,new_expr:&Token)->T;
+    fn visit_isvoid(&mut self,isvoid_expr:&Expr)->T;
+    fn visit_bitwise_not(&mut self,bitwise_not_expr:&Expr)->T;
+    fn visit_grouping(&mut self,grouping_expr:&Expr)->T;
+    fn not_implemented(&mut self)->T;
+    fn visit_stringliteral(&mut self,stringliteral:&Token)->T;
+    fn visit_integerliteral(&mut self,integerliteral:&Token)->T;
+    fn visit_boolliteral(&mut self,boolliteral:&Token)->T;
+    fn visit_id(&mut self,id:&Token)->T;
+}
+
+
 #[derive(Debug)]
 pub struct  Program{
     classes : Vec<Class>
@@ -188,11 +220,17 @@ impl Program{
     pub fn new(classes:Vec<Class>)->Program{
         Program{classes}
     }
+    pub fn accept<T>(&self,visitor:&mut dyn Visitor<T>)->T{
+        visitor.visit_program(&self.classes)
+    }
 }
 
 impl Class{
     pub fn new(type_:Token, inherits:Option<Token>, features:Vec<Feature>)->Class{
         Class{type_,inherits,features}
+    }
+    pub fn accept<T>(&self,visitor:&mut dyn Visitor<T>)->T{
+        visitor.visit_class( &self.type_, &self.inherits, &self.features)
     }
 }
 
@@ -203,13 +241,51 @@ impl Feature{
     pub fn new_attribute(id:Token,type_:Type,expr:Option<Expr>)->Feature{
         Feature::Attribute{id,type_,expr}
     }
+    pub fn accept<T>(&self,visitor:&mut dyn Visitor<T>)->T{
+        match self{
+            Feature::Method{id,type_,parameters,body} => visitor.visit_method(id,type_,parameters,body),
+            Feature::Attribute{id,type_,expr} => visitor.visit_attribute(id,type_,expr)
+        }
+    }
 }
 
 impl Formal{
     pub fn new(id:identifier,type_:Type)->Formal{
         Formal{id,type_}
     }
+    pub fn accept<T>(&self,visitor:&mut dyn Visitor<T>)->T{
+        visitor.visit_formal(&self.id,&self.type_)
+    }
 }
+
+impl Expr{
+    pub fn accept<T>(&self,visit:&mut dyn Visitor<T>)->T{
+        match self{
+            Expr::Assign{left,right} => visit.visit_assign(left,right),
+            Expr::Not{expr} => visit.visit_not(expr),
+            Expr::Comparison{left,operator,right} => visit.visit_comparison(left,operator,right),
+            Expr::Arithmetic{left,operator,right} => visit.visit_arithmetic(left,operator,right),
+            Expr::Factor{left,operator,right} => visit.visit_factor(left,operator,right),
+            Expr::New{type_} => visit.visit_new(type_),
+            Expr::IsVoid{expr} => visit.visit_isvoid(expr),
+            Expr::BitWiseNot{expr} => visit.visit_bitwise_not(expr),
+            Expr::StringLiteral{value} => visit.visit_stringliteral(value),
+            Expr::IntegerLiteral{value} => visit.visit_integerliteral(value),
+            Expr::BoolLiteral{value} => visit.visit_boolliteral(value),
+            Expr::ID{id} => visit.visit_id(id),
+            Expr::Case{expr,branches} => visit.visit_case(expr ,branches),
+            Expr::Branch{id,type_,expr} => visit.visit_branch(id,type_,expr),
+            Expr::If{Condition,Then,Else} => visit.visit_if(&Condition,Then,Else),
+            Expr::While{Condition,Loop} => visit.visit_while(Condition,Loop),
+            Expr::Let{declarations,body} => visit.visit_let(declarations,body),
+            Expr::Declaration{id,type_,expr} => visit.visit_declaration(id,type_,expr),
+            Expr::Block{exprs} => visit.visit_block(exprs),
+            Expr::Grouping{expr} => visit.visit_grouping(expr),
+            _ => visit.not_implemented()
+        }
+    }
+}
+
 
 impl Expr{
     pub fn IF_EXPR(Condition:Expr,Then:Expr,Else:Expr)->Expr{
