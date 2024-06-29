@@ -56,11 +56,11 @@ expr ::= ID <- expr
 | false
 
 */
-
+#[derive(Debug)]
 pub struct  Program{
     classes : Vec<Class>
 }
-
+#[derive(Debug)]
 pub struct Class{
     type_ : Token,
     inherits : Option<Token>,
@@ -69,7 +69,7 @@ pub struct Class{
 
 type Type = Token;
 type identifier = Token;
-
+#[derive(Debug)]
 pub enum Feature {
     Method{
         id : identifier,
@@ -83,7 +83,7 @@ pub enum Feature {
         expr : Option<Expr>
     }
 } 
-
+#[derive(Debug)]
 pub struct Formal{
     id : identifier,
     type_ : Type
@@ -181,10 +181,7 @@ pub enum Expr{
     Grouping{
         expr : Box<Expr>
     },
-    Error{
-        message : String
-    
-    }
+    Error
 }
 
 impl Program{
@@ -215,6 +212,27 @@ impl Formal{
 }
 
 impl Expr{
+    pub fn IF_EXPR(Condition:Expr,Then:Expr,Else:Expr)->Expr{
+        Expr::If{Condition:Box::new(Condition),Then:Box::new(Then),Else:Box::new(Else)}
+    }
+    pub fn BLOCK_EXPR(exprs:Vec<Expr>)->Expr{
+        Expr::Block{exprs}
+    }
+    pub fn WHILE_EXPR(condition:Expr,body:Expr)->Expr{
+        Expr::While{Condition:Box::new(condition),Loop:Box::new(body)}
+    }
+    pub fn LET_EXPR(declarations:Vec<Expr>,body:Expr)->Expr{
+        Expr::Let{declarations,body:Box::new(body)}
+    }
+    pub fn CASE_EXPR(expr:Expr,branches:Vec<Expr>)->Expr{
+        Expr::Case{expr:Box::new(expr),branches}
+    }
+    pub fn Declaration(id:identifier,type_:Type,expr:Option<Expr>)->Expr{
+        Expr::Declaration{id,type_,expr:Box::new(expr)}
+    }
+    pub fn ID(id:identifier)->Expr{
+        Expr::ID{id}
+    }
     pub fn Not(expr:Expr)->Expr{
         Expr::Not{expr:Box::new(expr)}
     }
@@ -260,7 +278,5 @@ impl Expr{
     pub fn BoolLiteral(value:Token)->Expr{
         Expr::BoolLiteral{value}
     }
-    pub fn Error(message:String)->Expr{
-        Expr::Error{message}
-    }
+    
 }

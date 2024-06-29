@@ -141,7 +141,7 @@ impl Scanner{
                 }
                
                 else{
-                    self.error(self.line,"Unexpected character ");
+                    self.error(self.line,&format!("Unexpected character '{}' ",c));
                    None
                 }
             }

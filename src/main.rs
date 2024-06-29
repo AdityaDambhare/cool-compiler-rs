@@ -1,11 +1,16 @@
 use scanner::Scanner;
 use parser::Parser;
-use ast::Expr;
+
 use std::io;
 mod token;
 mod scanner;
 mod parser;
 mod ast;
+mod astprinter;
+
+fn main() {
+    runprompt();
+}
 
 fn runprompt(){
     loop
@@ -31,13 +36,19 @@ fn runprompt(){
     for tok in tokens.iter(){
         println!("{:?}",tok);
     }
-    let mut  p = Parser::new(tokens);
-    let expr = p.parse();
-    println!("{:?}",expr);
+
+    let mut  p =  Parser::new(tokens);
+
+    let prog = match p.parse_program(){
+        Ok(prog) => prog,
+        Err(e) => {
+            println!("{}",e);
+            continue;
+        }
+    };
+    println!("{:?}",prog);
 }
 }
-fn main() {
-    runprompt();
-}
+
 
 
