@@ -19,13 +19,13 @@ pub fn new(tokens:Vec<Token>)->Parser{
 
 
 
-fn error(&mut self,message:&str){
+fn error(&mut self,message:&str,line:usize){
     if self.panic_mode{
         return;
     }
     self.had_error = true;
     self.panic_mode = true;
-    eprintln!("Error: {}",message);
+    eprintln!("Error at line {}: {}",line,message);
 }
 
 fn eof(&self)->bool{
@@ -73,7 +73,7 @@ fn consume(&mut self,token_type:TokenType,message:&str)->Token{
     }
     else{
         
-        self.error(message);
+        self.error(message,self.peek().line);
         self.synchronize();
         Token::new(0,"".to_string(),TokenType::ERROR,None)
     }
@@ -132,7 +132,7 @@ fn parse_feature(&mut self)->Feature{
         self.parse_attribute(id)
     }
     else{
-        self.error("Illegal Feature syntax");
+        self.error("Illegal Feature syntax",self.peek().line);
         self.synchronize();
         Feature::new_attribute(id, self.previous().clone(), None)
     }
@@ -198,7 +198,7 @@ fn block(&mut self)->Expr{
         exprs.push(self.expression());
         self.consume(TokenType::SEMICOLON,"Use ; to seperate expressions in block");
     }
-    if exprs.is_empty() {self.error("Empty block");}
+    if exprs.is_empty() {self.error("Empty block",self.peek().line);}
     self.consume(TokenType::RIGHTBRACE, "Expected '}' after block");
     Expr::BLOCK_EXPR(exprs)
 }
@@ -241,9 +241,10 @@ fn case(&mut self)->Expr{
         let type_ = self.consume(TokenType::IDENTIFIER,"Expected type after case branch");
         self.consume(TokenType::RARROW,"Expected '=>' after case branch type");
         let body = self.expression();
+        self.consume(TokenType::SEMICOLON, "expect ; after case branch body");
         branches.push(Expr::Branch{id,type_,expr:Box::new(body)});
     }
-    if branches.is_empty() {self.error("Empty case expression");}
+    if branches.is_empty() {self.error("Empty case expression",self.peek().line);}
     self.consume(TokenType::KEYESAC,"Expected 'esac' after case expression");
     Expr::CASE_EXPR(expr,branches)
 }
@@ -258,7 +259,7 @@ fn assignment(&mut self)->Expr{
                 Expr::Assign(Expr::ID(token),right)
             }
             _ => {
-                self.error("Invalid assignment target");
+                self.error("Invalid assignment target",self.peek().line);
                 Expr::Error  
             }
         
@@ -330,9 +331,58 @@ fn unary(&mut self)->Expr{
         let type_ = self.consume(TokenType::IDENTIFIER,"Expected type after new");
         Expr::New(type_)
     }
-    else{
-        self.primary()
+    else if self.match_token(TokenType::KEYDELETE){
+        let expr = self.expression();
+        Expr::Delete(expr)
     }
+    else{
+        self.dispatch(None)
+    }
+}
+
+fn dispatch(&mut self,expr:Option<Expr>)->Expr{
+    let mut  expr = match expr { Some(e) => e ,None =>self.primary()};
+    if(self.check(TokenType::LEFTPAREN)){
+        if self.previous().tokentype != TokenType::IDENTIFIER{
+            self.error("expression not a method name so it cannot be called", self.peek().line);
+        }
+        self.consume(TokenType::LEFTPAREN, "");
+        return self.patch_dispatch(expr,None,None);
+    }
+    let mut type_present = false;
+    let mut type_ = match self.match_token(TokenType::AT){
+        true =>{ type_present=true;Some(self.consume(TokenType::IDENTIFIER, "Expect type name after @"))},
+        false => None
+    };
+    if (type_present && !self.check(TokenType::DOT)){
+        self.consume(TokenType::DOT,"Expect method call after @ expression");
+    }
+    while(self.match_token(TokenType::DOT)){
+        if (!type_present){type_ = None;} 
+        let id = self.consume(TokenType::IDENTIFIER, "Expect method name for dispatch");
+        self.consume(TokenType::LEFTPAREN,"cannot access attribute . add '()' after method name in case you want to call it");
+        expr = self.patch_dispatch(expr,type_.clone(),Some(id));
+        type_present = false;
+    }
+    if self.check(TokenType::AT){
+        return self.dispatch(Some(expr));
+    }
+    if self.match_token(TokenType::LEFTPAREN){
+        let prev = self.previous().line;
+        self.error("Dispatch works on methods only . maybe you forgot adding  a '.'", prev);
+        self.consume(TokenType::RIGHTPAREN,"");
+    } 
+    expr
+}
+
+fn patch_dispatch(&mut self,expr:Expr,type_:Option<Token>,id:Option<Token>)->Expr{
+    let mut arguments : Vec<Expr> = vec![];
+    while(!self.check(TokenType::RIGHTPAREN)){
+        arguments.push(self.assignment());
+        if !self.match_token(TokenType::COMMA){break;}
+    }
+    self.consume(TokenType::RIGHTPAREN,"Expect ')' after call");
+    Expr::Dispatch(type_, expr, id, arguments)
 }
 
 fn primary(&mut self)->Expr{
@@ -372,7 +422,7 @@ fn primary(&mut self)->Expr{
         self.let_expr()
     }
     else{
-        self.error("Expected expression");
+        self.error("Expected expression",self.peek().line);
         Expr::Error
     }
 }

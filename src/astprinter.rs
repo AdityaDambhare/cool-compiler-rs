@@ -1,3 +1,5 @@
+
+
 use crate::ast::*;
 use crate::token::*;
 pub struct AstPrinter ;
@@ -55,9 +57,9 @@ impl Visitor<String> for AstPrinter{
         }
         result.push_str(") : ");
         result.push_str(&type_.lexeme);
-        result.push_str("{\n");
+        result.push_str(" {\n");
         result.push_str(&body.accept(self));
-        result.push_str("\n}");
+        result.push_str("\n }");
         result
     }
 
@@ -94,6 +96,10 @@ impl Visitor<String> for AstPrinter{
         format!("(new {})",new_expr.lexeme)
     }
 
+    fn visit_delete(&mut self,delete_expr:&Expr)->String {
+        format!("(delete {})",delete_expr.accept(self))
+    }
+
     fn visit_isvoid(&mut self,isvoid_expr:&Expr)->String {
         format!("isvoid ({})",isvoid_expr.accept(self))
     }
@@ -104,12 +110,12 @@ impl Visitor<String> for AstPrinter{
 
     fn visit_block(&mut self,block_expr:&Vec<Expr>)->String {
         let mut result = String::new();
-        result.push_str("{\n");
+        result.push_str("  {\n");
         for expr in block_expr{
             result.push_str(&expr.accept(self));
             result.push_str(";\n");
         }
-        result.push_str("}");
+        result.push_str("  }");
         result
     }
 
@@ -180,7 +186,26 @@ impl Visitor<String> for AstPrinter{
     fn visit_stringliteral(&mut self,stringliteral:&Token)->String {
         format!("\"{}\"",stringliteral.lexeme.clone())
     }
-
+    fn visit_dispatch(&mut self,target:&Option<Token>,expr:&Expr,method_name:&Option<Token>,arguments:&Vec<Expr>)->String {
+        let mut result = String::new();
+        result.push_str(&expr.accept(self));
+        match target {
+            Some(tok) => {result.push_str("@");result.push_str(&tok.lexeme.clone())},
+            None => ()
+        };
+        match method_name {
+            Some(tok) => {result.push_str(".");result.push_str(&tok.lexeme.clone())},
+            None => ()
+        };
+        result.push_str("(");
+        for expr in arguments{
+            result.push_str(&expr.accept(self));
+            result.push_str(",");
+        }
+        
+        result.push_str(")");
+        result
+    }
     fn not_implemented(&mut self)->String {
         String::from("Not implemented")
     }

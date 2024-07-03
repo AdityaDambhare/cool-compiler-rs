@@ -228,11 +228,11 @@ impl Scanner{
         Self::is_alpha(c)||Self::is_digit(c)
     }
     fn comment(&mut self){
-        while !self.eof() && self.check('\n') {
+        while !self.eof() && !self.check('\n') {
             self.advance();
         }   
         if self.check('\n'){self.line = self.line + 1;}
-        self.advance();
+        
     }
     fn block_comment(&mut self){
         while !self.eof(){
@@ -240,7 +240,6 @@ impl Scanner{
                 self.line = self.line + 1;
             }
             if self.check('*') && self.check_next(')'){
-                self.advance();
                 self.advance();
                 break;
             }

@@ -36,8 +36,9 @@ expr ::= ID <- expr
 | while expr loop expr pool
 | { [[expr; ]]+}
 | let ID : TYPE [ <- expr ] [[, ID : TYPE [ <- expr ]]]∗ in expr
-| case expr of [ID : TYPE => expr]]+esac
+| case expr of [ID : TYPE => expr;]]+esac
 | new TYPE
+|delete expr
 | isvoid expr
 | expr + expr
 | expr − expr
@@ -77,6 +78,7 @@ pub trait  Visitor<T>{
     fn visit_assign(&mut self,left:&Expr,right:&Expr)->T;
     fn visit_not(&mut self,not_expr:&Expr)->T;
     fn visit_new(&mut self,new_expr:&Token)->T;
+    fn visit_delete(&mut self,delete_expr:&Expr)->T;
     fn visit_isvoid(&mut self,isvoid_expr:&Expr)->T;
     fn visit_bitwise_not(&mut self,bitwise_not_expr:&Expr)->T;
     fn visit_grouping(&mut self,grouping_expr:&Expr)->T;
@@ -85,6 +87,7 @@ pub trait  Visitor<T>{
     fn visit_integerliteral(&mut self,integerliteral:&Token)->T;
     fn visit_boolliteral(&mut self,boolliteral:&Token)->T;
     fn visit_id(&mut self,id:&Token)->T;
+    fn visit_dispatch(&mut self,target:&Option<Type>,expr:&Expr,method_name:&Option<identifier>,arguments:&Vec<Expr>)->T;
 }
 
 
@@ -147,23 +150,20 @@ pub enum Expr{
     New{
         type_ : Token
     },
+    Delete{
+        expr : Box<Expr>
+    }
+    ,
     IsVoid{
         expr : Box<Expr>
     },
     BitWiseNot{ //~ operator
         expr : Box<Expr>
     },
-    DispatchSelection{ //@ operator
+    Dispatch{
+        target : Option<Type>,
         expr : Box<Expr>,
-        type_ : Type,
-    },
-    
-    Dot{
-        expr : Box<Expr>,
-        id : identifier
-    },
-    Call{
-        id : identifier,
+        method_name:Option<identifier>,
         arguments : Vec<Expr>
     },
     StringLiteral{
@@ -281,6 +281,8 @@ impl Expr{
             Expr::Declaration{id,type_,expr} => visit.visit_declaration(id,type_,expr),
             Expr::Block{exprs} => visit.visit_block(exprs),
             Expr::Grouping{expr} => visit.visit_grouping(expr),
+            Expr::Delete { expr } => visit.visit_delete(expr),
+            Expr::Dispatch { target, expr, method_name, arguments } => visit.visit_dispatch(target, expr, method_name, arguments),
             _ => visit.not_implemented()
         }
     }
@@ -327,6 +329,9 @@ impl Expr{
     pub fn New(type_:Token)->Expr{
         Expr::New{type_}
     }
+    pub fn Delete(expr:Expr)->Expr{
+        Expr::Delete{expr:Box::new(expr)}
+    }
     pub fn IsVoid(expr:Expr)->Expr{
         Expr::IsVoid{expr:Box::new(expr)}
     }
@@ -336,15 +341,7 @@ impl Expr{
     pub fn Grouping(expr:Expr)->Expr{
         Expr::Grouping{expr:Box::new(expr)}
     }
-    pub fn DispatchSelection(expr:Expr,type_:Type)->Expr{
-        Expr::DispatchSelection{expr:Box::new(expr),type_}
-    }
-    pub fn Dot(expr:Expr,id:identifier)->Expr{
-        Expr::Dot{expr:Box::new(expr),id}
-    }
-    pub fn Call(id:identifier,arguments:Vec<Expr>)->Expr{
-        Expr::Call{id,arguments}
-    }
+   
     pub fn StringLiteral(value:Token)->Expr{
         Expr::StringLiteral{value}
     }
@@ -353,6 +350,10 @@ impl Expr{
     }
     pub fn BoolLiteral(value:Token)->Expr{
         Expr::BoolLiteral{value}
+    }
+
+    pub fn Dispatch(target:Option<Type>,expr:Expr,method_name:Option<identifier>,arguments:Vec<Expr>)->Expr{
+        Expr::Dispatch{target,expr:Box::new(expr),method_name,arguments}
     }
     
 }

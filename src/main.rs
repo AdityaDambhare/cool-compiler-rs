@@ -9,8 +9,54 @@ mod ast;
 mod astprinter;
 
 fn main() {
-    runprompt();
+    let args = std::env::args().collect::<Vec<String>>();
+    if(args.len() > 2){
+        println!("Usage: jcc [script]");
+        std::process::exit(64);
+    }
+    else if args.len() == 2{
+        runFile();
+    }
+    else{
+        runprompt();
+    }
 }
+
+
+fn runFile(){
+    let filename = std::env::args().nth(1).unwrap();
+    let source = match std::fs::read_to_string(&filename){
+        Ok(source) => source,
+        Err(e) => {
+            println!("Error reading file: {}",e);
+            std::process::exit(74);
+        }
+    };
+    let mut scanner = Scanner::new(source);
+    let tokens = match scanner.scan_tokens(){
+        Ok(tokens) => tokens,
+        Err(e) => {
+            println!("{}",e);
+            std::process::exit(65);
+        }
+    };
+
+    for tok in tokens.iter(){
+        println!("{:?}",tok);
+    }
+
+    let mut  p =  Parser::new(tokens);
+
+    let prog = match p.parse_program(){
+        Ok(prog) => prog,
+        Err(e) => {
+            println!("{}",e);
+            std::process::exit(65);
+        }
+    };
+    println!("{}",astprinter::AstPrinter::print_program(&prog));
+}
+
 
 fn runprompt(){
     loop
@@ -47,6 +93,7 @@ fn runprompt(){
         }
     };
     println!("{}",astprinter::AstPrinter::print_program(&prog));
+    
 }
 }
 

@@ -2,7 +2,7 @@
 pub enum TokenType{
     //keywords
     KEYCLASS,KEYIF,KEYELSE,KEYTHEN,KEYFI,KEYIN,KEYINHERITS,KEYLET,KEYLOOP,KEYPOOL,KEYWHILE,
-    KEYCASE,KEYESAC,KEYNEW,KEYOF,KEYTRUE,KEYFALSE,
+    KEYCASE,KEYESAC,KEYNEW,KEYOF,KEYTRUE,KEYFALSE,KEYDELETE,
     //All keywords are case-insensitive except true and false
 
     INTEGER,IDENTIFIER,STRING,
@@ -29,6 +29,7 @@ impl Token{
     
     pub fn keyword(lexeme:&str)->Option<TokenType>{
         match lexeme{
+        "delete" => Some(TokenType::KEYDELETE),
         "isvoid" => Some(TokenType::ISVOID),
         "class" => Some(TokenType::KEYCLASS),
         "if" => Some(TokenType::KEYIF),
