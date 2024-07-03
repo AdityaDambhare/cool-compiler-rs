@@ -184,7 +184,7 @@ impl Scanner{
         }
         self.current = self.current-1;
         let lexeme :&str = self.source[self.start..self.current].trim();
-        let tokentype :TokenType = match Token::keyword(lexeme) {
+        let tokentype :TokenType = match Token::keyword(lexeme.to_lowercase().as_str()) {
           Some(value) => value,
           None => IDENTIFIER  
         };
@@ -201,6 +201,9 @@ impl Scanner{
 
     fn string_token(&mut self)->Option<Token>{
         while !self.eof() && !self.check('\"') {
+            if self.check('\\'){
+                self.advance();
+            }
             if self.check('\0') {self.error(self.line,"null character in string");}
             if self.check('\n'){
                 self.line = self.line + 1;
@@ -235,17 +238,24 @@ impl Scanner{
         
     }
     fn block_comment(&mut self){
+        let line = self.line;
+        self.advance();
         while !self.eof(){
             if self.check('\n'){
                 self.line = self.line + 1;
             }
+            if self.check('(')&&self.check_next('*'){
+                self.block_comment();
+            }
             if self.check('*') && self.check_next(')'){
                 self.advance();
-                break;
+                return;
             }
             self.advance();
-            if self.eof() {self.error(self.line,"Unterminated block comment");}
+            
         }
+        self.error(line,"Unterminated block comment");
+        
     }
     
     fn eof(&mut self)->bool{

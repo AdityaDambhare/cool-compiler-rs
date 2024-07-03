@@ -24,7 +24,6 @@ fn error(&mut self,message:&str,line:usize){
         return;
     }
     self.had_error = true;
-    self.panic_mode = true;
     eprintln!("Error at line {}: {}",line,message);
 }
 
@@ -72,10 +71,11 @@ fn consume(&mut self,token_type:TokenType,message:&str)->Token{
         self.advance().clone()
     }
     else{
-        
+       
         self.error(message,self.peek().line);
+        self.panic_mode = true;
         self.synchronize();
-        Token::new(0,"".to_string(),TokenType::ERROR,None)
+        Token::new(0," ".to_string(),TokenType::ERROR,None)
     }
 }
 
@@ -105,11 +105,26 @@ pub fn parse_program(&mut self)->Result<Program,&str>{
         }
         if self.had_error {Err("error in parsing")} else {Ok(Program::new(classes))}
 }
+
 fn parse_class(&mut self)->Class{
     self.consume(TokenType::KEYCLASS, "Expected class definition");
     let name = self.consume(TokenType::IDENTIFIER,"Expected class name");
+    if name.lexeme.chars().nth(0).unwrap().is_ascii_lowercase(){
+        self.error(format!("error at \"class {}\". Class name should start with an uppercase letter.",
+        name.lexeme.clone())
+        .as_str(),
+        name.line);
+    }
     let inherits = match self.match_token(TokenType::KEYINHERITS){
-        true => Some(self.consume(TokenType::IDENTIFIER,"Expected superclass name")),
+        true =>{ let name = self.consume(TokenType::IDENTIFIER,"Expected superclass name");
+        if name.lexeme.chars().nth(0).unwrap().is_ascii_lowercase(){
+            self.error(format!("error at \"inherits {}\". Class name should start with an uppercase letter.",
+            name.lexeme.clone())
+            .as_str(),
+            name.line);
+        }
+        Some(name)
+        },
         false => None
     };
     self.consume(TokenType::LEFTBRACE,"Expected { after class declaration");
@@ -327,14 +342,7 @@ fn unary(&mut self)->Expr{
         let expr = self.expression();
         Expr::BitWiseNot(expr)
     }
-    else if self.match_token(TokenType::KEYNEW){
-        let type_ = self.consume(TokenType::IDENTIFIER,"Expected type after new");
-        Expr::New(type_)
-    }
-    else if self.match_token(TokenType::KEYDELETE){
-        let expr = self.expression();
-        Expr::Delete(expr)
-    }
+   
     else{
         self.dispatch(None)
     }
@@ -347,7 +355,7 @@ fn dispatch(&mut self,expr:Option<Expr>)->Expr{
             self.error("expression not a method name so it cannot be called", self.peek().line);
         }
         self.consume(TokenType::LEFTPAREN, "");
-        return self.patch_dispatch(expr,None,None);
+        expr = self.patch_dispatch(expr,None,None);
     }
     let mut type_present = false;
     let mut type_ = match self.match_token(TokenType::AT){
@@ -400,6 +408,14 @@ fn primary(&mut self)->Expr{
     }
     else if self.match_token(TokenType::KEYFALSE){
         Expr::BoolLiteral(self.tokens[self.current - 1].clone())
+    }
+    else if self.match_token(TokenType::KEYNEW){
+        let type_ = self.consume(TokenType::IDENTIFIER,"Expected type after new");
+        Expr::New(type_)
+    }
+    else if self.match_token(TokenType::KEYDELETE){
+        let expr = self.expression();
+        Expr::Delete(expr)
     }
     else if self.match_token(TokenType::LEFTBRACE){
         self.block()
