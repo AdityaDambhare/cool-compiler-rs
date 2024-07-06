@@ -36,7 +36,7 @@ fn runFile(){
     let tokens = match scanner.scan_tokens(){
         Ok(tokens) => tokens,
         Err(e) => {
-            println!("{}",e);
+            eprintln!("{}",e);
             std::process::exit(65);
         }
     };
@@ -50,7 +50,7 @@ fn runFile(){
     let prog = match p.parse_program(){
         Ok(prog) => prog,
         Err(e) => {
-            println!("{}",e);
+            eprintln!("{}",e);
             std::process::exit(65);
         }
     };

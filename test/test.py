@@ -20,11 +20,17 @@ def run_coolc_on_examples(directory_path):
         except:
             print(f"error reading {file_path}")
             continue
+        if "parsing" in result.stderr:
+            errortype = "Parsing error"
+        elif "scanning" in result.stderr:
+            errortype = "Scanning error"
+        else:
+            errortype = "unknown error"
         # Capture and print the exit code
         if result.returncode == 0:
             print(f"{file_path} passed")
         else:
-            print(f"{file_path} failed with exit code {result.returncode}" )
+            print(f"{file_path} failed with exit code {result.returncode} . {errortype} " )
         
         # Optionally, print stdout and stderr
         # print(f"stdout: {result.stdout}")

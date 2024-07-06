@@ -55,6 +55,9 @@ impl Visitor<String> for AstPrinter{
             result.push_str(&parameter.accept(self));
             result.push_str(",");
         }
+        if result.ends_with(","){
+            result.pop();
+        }
         result.push_str(") : ");
         result.push_str(&type_.lexeme);
         result.push_str(" {\n");
@@ -73,35 +76,35 @@ impl Visitor<String> for AstPrinter{
     }
 
     fn visit_assign(&mut self,left:&Expr,right:&Expr)->String {
-        format!("{} <- ({})",left.accept(self),right.accept(self))
+        format!("{} <- {}",left.accept(self),right.accept(self))
     }
 
     fn visit_arithmetic(&mut self,left:&Expr,operator:&Token,right:&Expr)->String {
-        format!("({}) {} ({})",left.accept(self),operator.lexeme,right.accept(self))
+        format!("({} {} {})",left.accept(self),operator.lexeme,right.accept(self))
     }
 
     fn visit_factor(&mut self,left:&Expr,operator:&Token,right:&Expr)->String {
-        format!("({}) {} ({})",left.accept(self),operator.lexeme,right.accept(self))
+        format!("({} {} {})",left.accept(self),operator.lexeme,right.accept(self))
     }
 
     fn visit_comparison(&mut self,left:&Expr,operator:&Token,right:&Expr)->String {
-        format!("({}) {} ({})",left.accept(self),operator.lexeme,right.accept(self))
+        format!("({} {} {})",left.accept(self),operator.lexeme,right.accept(self))
     }
 
     fn visit_bitwise_not(&mut self,bitwise_not_expr:&Expr)->String {
-        format!("~({})",bitwise_not_expr.accept(self))
+        format!("(~{})",bitwise_not_expr.accept(self))
     }
 
     fn visit_new(&mut self,new_expr:&Token)->String {
-        format!("(new {})",new_expr.lexeme)
+        format!("new {}",new_expr.lexeme)
     }
 
     fn visit_delete(&mut self,delete_expr:&Expr)->String {
-        format!("(delete {})",delete_expr.accept(self))
+        format!("delete {}",delete_expr.accept(self))
     }
 
     fn visit_isvoid(&mut self,isvoid_expr:&Expr)->String {
-        format!("isvoid ({})",isvoid_expr.accept(self))
+        format!("isvoid {}",isvoid_expr.accept(self))
     }
 
     fn visit_grouping(&mut self,grouping_expr:&Expr)->String {
@@ -141,11 +144,11 @@ impl Visitor<String> for AstPrinter{
     }
 
     fn visit_not(&mut self,not_expr:&Expr)->String {
-        format!("not ({})",not_expr.accept(self))
+        format!("(not {})",not_expr.accept(self))
     }
 
     fn visit_if(&mut self,condition:&Expr,body:&Expr,else_expr:&Expr)->String {
-        format!("if {} then\n{}\nelse\n{}\nfi",condition.accept(self),body.accept(self),else_expr.accept(self))
+        format!("if {} then {}\nelse\n{}\nfi",condition.accept(self),body.accept(self),else_expr.accept(self))
     }
 
     fn visit_let(&mut self,declarations:&Vec<Expr>,body:&Expr)->String {
@@ -202,7 +205,9 @@ impl Visitor<String> for AstPrinter{
             result.push_str(&expr.accept(self));
             result.push_str(",");
         }
-        
+        if result.ends_with(","){
+            result.pop();
+        }
         result.push_str(")");
         result
     }

@@ -17,7 +17,12 @@ pub fn new(tokens:Vec<Token>)->Parser{
     }
 }
 
-
+fn is_reserved(&self,type_:&str)->bool{
+    match type_{
+        "Object"|"SELF_TYPE"|"self"=> true,
+        _ => false
+    }
+}
 
 fn error(&mut self,message:&str,line:usize){
     if self.panic_mode{
@@ -103,7 +108,7 @@ pub fn parse_program(&mut self)->Result<Program,&str>{
             if self.had_error {break;}
             self.consume(TokenType::SEMICOLON, "Expected ; after class definition");
         }
-        if self.had_error {Err("error in parsing")} else {Ok(Program::new(classes))}
+        if self.had_error {Err("Error in parsing")} else {Ok(Program::new(classes))}
 }
 
 fn parse_class(&mut self)->Class{
@@ -115,6 +120,9 @@ fn parse_class(&mut self)->Class{
         .as_str(),
         name.line);
     }
+    if self.is_reserved(&name.lexeme){
+        self.error(format!("error at \"class {}\". {} is a reserved keyword",&name.lexeme,&name.lexeme).as_str(),name.line);
+    }
     let inherits = match self.match_token(TokenType::KEYINHERITS){
         true =>{ let name = self.consume(TokenType::IDENTIFIER,"Expected superclass name");
         if name.lexeme.chars().nth(0).unwrap().is_ascii_lowercase(){
@@ -122,6 +130,9 @@ fn parse_class(&mut self)->Class{
             name.lexeme.clone())
             .as_str(),
             name.line);
+        }
+        if self.is_reserved(&name.lexeme) && !name.lexeme.eq("Object"){
+            self.error(format!("error at \"inherits {}\". {} is a reserved keyword",&name.lexeme,&name.lexeme).as_str(),name.line);
         }
         Some(name)
         },
@@ -140,6 +151,16 @@ fn parse_class(&mut self)->Class{
 
 fn parse_feature(&mut self)->Feature{
     let id = self.consume(TokenType::IDENTIFIER, "Expect identifier");
+    if id.lexeme.chars().nth(0).unwrap().is_ascii_uppercase(){
+        self.error(format!("error at \"{}\". Attribute/Method name should start with a lowercase letter.",
+        id.lexeme.clone())
+        .as_str(),
+        id.line);
+    }
+    if self.is_reserved(&id.lexeme){
+        self.error(format!("error at \"{}\". {} is a reserved keyword",&id.lexeme,&id.lexeme).as_str(),id.line);
+    }
+
     if self.match_token(TokenType::LEFTPAREN){
         self.parse_method(id)
     }
